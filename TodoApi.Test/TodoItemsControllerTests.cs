@@ -13,8 +13,9 @@ public class TodoItemsControllerTests : IClassFixture<CustomWebApplicationFactor
     }
 
     [Fact]
-    public void TestGetTodoItems()
+    public async void TestGetTodoItems()
     {
-        //var response = await _client.GetAsync("api/TodoItems");
+        var response = await _client.GetAsync("api/TodoItems");
+        Console.Write(response);
     }
 }

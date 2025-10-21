@@ -25,6 +25,7 @@ public class CustomWebApplicationFactory<TProgram>
       //Create initial data
       context.TodoItems.Add(new TodoItem() { Id=1, Name="uno" });
       context.TodoItems.Add(new TodoItem() { Id=2, Name="dos", IsComplete=true });
+      context.TodoItems.Add(new TodoItem() { Id=3, Name="tres", IsComplete=false });
 
       context.SaveChanges();
     });

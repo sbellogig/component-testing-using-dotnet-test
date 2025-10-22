@@ -1,7 +1,9 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using ComponentTests;
 using Humanizer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using NuGet.ContentModel;
 using TodoApi.Models;
@@ -39,6 +41,7 @@ public class TodoItemsControllerTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async void TestGetTodoItem()
     {
+        // Correct data
         TodoItemDTO todoItem = new TodoItemDTO { Id = 2, Name = "dos", IsComplete = true };
         var response = await _client.GetAsync("api/TodoItems/" + todoItem.Id);
         response.EnsureSuccessStatusCode();
@@ -50,14 +53,38 @@ public class TodoItemsControllerTests : IClassFixture<CustomWebApplicationFactor
         Assert.Equal(todoItem.Id, data.Id);
         Assert.Equal(todoItem.Name, data.Name);
         Assert.Equal(todoItem.IsComplete, data.IsComplete);
+
+        // Missing data
+        int missingId = 99;
+        response = await _client.GetAsync("api/TodoItems/" + missingId);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async void TestPutTodoItem()
     {
-        TodoItemDTO todoItem = new TodoItemDTO { Id = 1, Name = "otro", IsComplete = true };
+        // Missing data
+        TodoItemDTO todoItem = new TodoItemDTO { Id = 99, Name = "otro", IsComplete = true };
         var response = await _client.PutAsJsonAsync("api/TodoItems/" + todoItem.Id, todoItem);
+
+        response = await _client.GetAsync("api/TodoItems/" + todoItem.Id);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        // Correct data
+        todoItem = new TodoItemDTO { Id = 1, Name = "otro", IsComplete = true };
+        response = await _client.PutAsJsonAsync("api/TodoItems/" + todoItem.Id, todoItem);
         response.EnsureSuccessStatusCode();
+
+        response = await _client.GetAsync("api/TodoItems/" + todoItem.Id);
+        response.EnsureSuccessStatusCode();
+        TodoItemDTO? data = await response.Content.ReadFromJsonAsync<TodoItemDTO?>();
+        Assert.NotNull(data);
+        var jsonOutput = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+        _output.WriteLine("Deserialized Data (as JSON):");
+        _output.WriteLine(jsonOutput);
+        Assert.Equal(todoItem.Id, data.Id);
+        Assert.Equal(todoItem.Name, data.Name);
+        Assert.Equal(todoItem.IsComplete, data.IsComplete);
     }
 
     [Fact]
@@ -80,6 +107,7 @@ public class TodoItemsControllerTests : IClassFixture<CustomWebApplicationFactor
          _output.WriteLine("Deleting: " + todoItem.Id);
         var response = await _client.DeleteAsync("api/TodoItems/" + todoItem.Id);
         response.EnsureSuccessStatusCode();
+        
         response = await _client.GetAsync("api/TodoItems/" + todoItem.Id);
         Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
     }
